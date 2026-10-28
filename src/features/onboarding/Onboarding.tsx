@@ -14,7 +14,7 @@ interface Props {
 const noop = () => {};
 const SLIDES = 3;
 
-/** 처음 들어온 사람에게 보여주는 세 장짜리 안내. 마지막 장에서 Google 로그인 */
+/** 처음 들어온 사람에게 보여주는 세 장짜리 안내. 마지막 장에서 Google 로그인하고, 이미 계정이 있는 사람은 상단 버튼으로 바로 로그인 */
 export function Onboarding({ onGoogle }: Props) {
   const [i, setI] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -47,7 +47,13 @@ export function Onboarding({ onGoogle }: Props) {
 
   return (
     <div className="onb" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-      <p className="eyebrow">만다라트 · 목표 달성표</p>
+      <div className="onb-top">
+        <p className="eyebrow">만다라트 · 목표 달성표</p>
+        <button type="button" className="btn onb-login" onClick={login} disabled={busy} aria-label="Google로 로그인">
+          <GoogleIcon />
+          {busy ? '이동 중…' : '로그인'}
+        </button>
+      </div>
       <h1 className="onb-logo">MANDALART</h1>
 
       <div className="onb-track" style={{ transform: `translateX(-${i * 100}%)` }} aria-live="polite">
