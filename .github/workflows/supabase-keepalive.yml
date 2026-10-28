@@ -1,0 +1,26 @@
+# Supabase Free 플랜은 7일간 요청이 없으면 프로젝트를 일시중지(pause)한다.
+# 매일 한 번 REST API를 호출해 "활동"을 만들어 pause를 막는다.
+# 필요한 저장소 시크릿: SUPABASE_URL, SUPABASE_ANON_KEY
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: '17 3 * * *'   # 매일 03:17 UTC (한국 12:17)
+  workflow_dispatch:        # Actions 탭에서 수동 실행용
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query boards table
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          status=$(curl -s -o /dev/null -w '%{http_code}' \
+            "$SUPABASE_URL/rest/v1/boards?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+          echo "HTTP $status"
+          # RLS 때문에 빈 배열이 오지만 200이면 정상 (요청 자체가 활동으로 집계됨)
+          [ "$status" = "200" ]
