@@ -85,7 +85,7 @@ export function Onboarding({ onGoogle }: Props) {
                 <strong>블록 크게 보기</strong>
                 <span>
                   {isMobile ? (
-                    '블록을 두 번 탭하면 크게 열려서 편하게 적을 수 있어요.'
+                    '칸을 탭하면 크게 열리고 키보드가 바로 떠서 편하게 적을 수 있어요.'
                   ) : (
                     <>
                       <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Enter</kbd> 또는 블록 오른쪽 아래 버튼으로 한 블록만 크게 열어요.
@@ -123,10 +123,13 @@ export function Onboarding({ onGoogle }: Props) {
             </li>
           </ul>
           <h2>시작해 볼까요?</h2>
-          <button type="button" className="btn google" onClick={login} disabled={busy}>
-            <GoogleIcon />
-            {busy ? '이동 중…' : 'Google로 계속하기'}
-          </button>
+          {/* 모바일은 아래 플로팅 바에 같은 버튼이 있다 */}
+          {!isMobile && (
+            <button type="button" className="btn google" onClick={login} disabled={busy}>
+              <GoogleIcon />
+              {busy ? '이동 중…' : 'Google로 계속하기'}
+            </button>
+          )}
           <p className="pnote">로그인은 한 번만 하면 돼요. 다음부터는 자동으로 들어와집니다.</p>
         </section>
       </div>
@@ -151,6 +154,11 @@ export function Onboarding({ onGoogle }: Props) {
           <button type="button" className="btn solid" onClick={() => go(i + 1)}>
             다음
             <ChevronRightIcon />
+          </button>
+        ) : isMobile ? (
+          <button type="button" className="btn google" onClick={login} disabled={busy}>
+            <GoogleIcon />
+            {busy ? '이동 중…' : 'Google로 계속하기'}
           </button>
         ) : (
           <span className="icon-btn" aria-hidden="true" />

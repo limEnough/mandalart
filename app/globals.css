@@ -13,6 +13,7 @@
   --core-fg: #f5f6f1;
   --done: #c6e0d0;
   --danger: #c2412d;
+  --dim: rgba(24, 36, 30, 0.45);
 
   --f-title: 'Federo', Georgia, serif;
   --f-body: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic',
@@ -26,13 +27,13 @@
   :root:not([data-mode]) {
     --paper: #0d1512; --surface: #13201a; --ink: #7dd3a6; --text: #e3eee8; --muted: #8a9c93;
     --line: rgba(125, 211, 166, 0.22); --tint: #17281f; --core: #7dd3a6; --core-fg: #0d1512; --done: #22473a;
-    --danger: #f97066; color-scheme: dark;
+    --danger: #f97066; --dim: rgba(0, 0, 0, 0.62); color-scheme: dark;
   }
 }
 :root[data-mode='night'] {
   --paper: #0d1512; --surface: #13201a; --ink: #7dd3a6; --text: #e3eee8; --muted: #8a9c93;
   --line: rgba(125, 211, 166, 0.22); --tint: #17281f; --core: #7dd3a6; --core-fg: #0d1512; --done: #22473a;
-  --danger: #f97066; color-scheme: dark;
+  --danger: #f97066; --dim: rgba(0, 0, 0, 0.62); color-scheme: dark;
 }
 
 /* ───────── base ───────── */
@@ -177,7 +178,8 @@ button, select, textarea, input { font: inherit; color: inherit; }
 
 /* ───────── dialogs ───────── */
 .overlay {
-  position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: rgba(6, 12, 9, 0.55);
+  position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: var(--dim);
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
   padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px))
     max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
   animation: fade 0.15s ease-out;
@@ -308,3 +310,59 @@ button, select, textarea, input { font: inherit; color: inherit; }
 .btn.google:hover { border-color: var(--ink); color: var(--text); }
 .btn.google svg { width: 18px; height: 18px; }
 .notice code { font-family: var(--f-mono); font-size: 12.5px; background: var(--tint); padding: 1px 5px; border-radius: 3px; }
+
+/* ───────── mobile ───────── */
+.m-only { display: none !important; }
+.mhint {
+  margin: 0; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 4px;
+  background: var(--tint); color: var(--ink); font-size: 13px; font-weight: 500; line-height: 1.5;
+}
+.mhint svg { width: 16px; height: 16px; flex: none; }
+
+/* 상단 고정 바의 ⋯ 메뉴 */
+.menu-wrap { position: relative; flex: none; }
+.menu {
+  position: absolute; right: 0; top: calc(100% + 6px); min-width: 210px; z-index: 30; padding: 6px;
+  display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--ink); border-radius: 6px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22); animation: rise 0.15s ease-out;
+}
+.menu button {
+  height: 42px; border: 0; background: transparent; border-radius: 4px; padding: 0 10px; font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; gap: 10px; text-align: left; color: var(--text); white-space: nowrap;
+}
+.menu button svg { width: 16px; height: 16px; flex: none; }
+.menu button .count { margin-left: auto; padding-left: 12px; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
+.menu button:active { background: var(--tint); }
+.menu button.danger { color: var(--danger); }
+.menu button[aria-disabled='true'] { opacity: 0.55; }
+.menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+
+@media (max-width: 640px) {
+  .m-only { display: inline-flex !important; }
+  .d-only { display: none !important; }
+  .wrap { gap: 18px; }
+
+  /* 도구 모음: 화면 위에 고정, 좌우 여백까지 배경을 채운다 */
+  .mbar {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; flex-wrap: nowrap; gap: 8px;
+    margin: -14px calc(-1 * max(16px, env(safe-area-inset-right, 0px))) 0 calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+    padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px));
+    background: var(--paper); border-bottom: 1px solid var(--line);
+  }
+  .mbar .account { flex: none; }
+  .mbar .sel { flex: 1 1 auto; min-width: 0; max-width: none; }
+  .mbar .btn { flex: none; width: 38px; height: 38px; }
+
+  .overlay { overscroll-behavior: contain; }
+  .panel { padding: 14px; overscroll-behavior: contain; }
+  .fgrid .chk { width: max(26px, 18cqw); height: max(26px, 18cqw); top: 5cqw; right: 5cqw; }
+
+  /* 온보딩: 이동 버튼은 하단 플로팅 */
+  .onb { min-height: 0; padding-bottom: 80px; }
+  .onb-nav {
+    position: fixed; z-index: 40; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px)); padding: 10px 12px; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  }
+  .onb-nav .btn.solid, .onb-nav .btn.google { height: 38px; width: auto; margin: 0; font-size: 14px; padding: 0 14px; }
+}

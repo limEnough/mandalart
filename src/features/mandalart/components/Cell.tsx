@@ -8,8 +8,8 @@ export interface CellHandlers {
   onChange: (b: number, c: number, value: string) => void;
   onToggle: (b: number, c: number) => void;
   onLimit: () => void;
-  /** Enter → 줄바꿈, Ctrl/⌘ + Enter → 블록 크게 보기 (보드에서만) */
-  onExpand?: (b: number) => void;
+  /** Enter → 줄바꿈, Ctrl/⌘ + Enter → 블록 크게 보기 (보드에서만). 같은 칸에 포커스가 이어지도록 c도 넘긴다 */
+  onExpand?: (b: number, c: number) => void;
 }
 
 interface CellProps extends CellHandlers {
@@ -72,7 +72,7 @@ export const Cell = memo(function Cell({
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && onExpand) {
       e.preventDefault();
-      onExpand(b);
+      onExpand(b, c);
       return;
     }
     if (e.key === 'Enter' && !e.nativeEvent.isComposing && e.keyCode !== 229) {
@@ -89,7 +89,7 @@ export const Cell = memo(function Cell({
     .join(' ');
 
   return (
-    <div className={className} data-kind={kind}>
+    <div className={className} data-kind={kind} data-c={c}>
       <div
         ref={ref}
         className="txt"

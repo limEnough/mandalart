@@ -13,6 +13,37 @@ interface DialogProps {
   children: ReactNode;
 }
 
+/* 열린 대화창 수. 0 → 1 이 될 때 바깥 페이지 스크롤을 잠그고, 마지막 창이 닫힐 때 푼다 */
+let openCount = 0;
+let savedScrollY = 0;
+
+/**
+ * 바깥 페이지 스크롤 잠금. overflow: hidden만으로는 iOS Safari가 뒤 페이지를 계속 스크롤하므로
+ * body를 fixed로 고정하고, 닫을 때 원래 스크롤 위치로 되돌린다.
+ */
+function lockScroll() {
+  if (openCount++ > 0) return;
+  savedScrollY = window.scrollY;
+  const s = document.body.style;
+  s.position = 'fixed';
+  s.top = `-${savedScrollY}px`;
+  s.left = '0';
+  s.right = '0';
+  s.width = '100%';
+  s.overflow = 'hidden';
+}
+function unlockScroll() {
+  if (--openCount > 0) return;
+  const s = document.body.style;
+  s.position = '';
+  s.top = '';
+  s.left = '';
+  s.right = '';
+  s.width = '';
+  s.overflow = '';
+  window.scrollTo(0, savedScrollY);
+}
+
 export function Dialog({ open, onClose, titleId, wide, dismissible = true, children }: DialogProps) {
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
@@ -20,6 +51,7 @@ export function Dialog({ open, onClose, titleId, wide, dismissible = true, child
   useEffect(() => {
     if (!open) return;
     const prev = document.activeElement as HTMLElement | null;
+    lockScroll();
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || !dismissible) return;
       // 셀 편집 중 Esc는 편집 종료가 먼저
@@ -29,6 +61,7 @@ export function Dialog({ open, onClose, titleId, wide, dismissible = true, child
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('keydown', onKey);
+      unlockScroll();
       prev?.focus?.();
     };
   }, [open, dismissible]);

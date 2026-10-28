@@ -2,13 +2,14 @@
 
 import type { User } from '@supabase/supabase-js';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useAuth } from '@/features/auth/useAuth';
 import { Onboarding } from '@/features/onboarding/Onboarding';
 import { supabase } from '@/lib/supabase';
 import { useMediaQuery } from '@/shared/hooks/useMediaQuery';
 import { useThemeMode } from '@/shared/hooks/useThemeMode';
 import { ToastProvider, useToast } from '@/shared/ui/Toast';
-import { CloudIcon } from '@/shared/ui/icons';
+import { CloudIcon, ExpandIcon } from '@/shared/ui/icons';
 import { FocusDialog } from './components/FocusDialog';
 import { Header } from './components/Header';
 import { ImageDialog } from './components/ImageDialog';
@@ -64,7 +65,8 @@ function Workspace({ user, onSignOut }: { user: User; onSignOut: () => Promise<v
   const isMobile = useMediaQuery('(max-width: 640px)');
   const toast = useToast();
 
-  const [focusBlock, setFocusBlock] = useState<number | null>(null);
+  /** 확대 보기로 연 블록과, 열리자마자 포커스할 칸 */
+  const [focus, setFocus] = useState<{ b: number; c: number | null } | null>(null);
   const [imageOpen, setImageOpen] = useState(false);
 
   const storeRef = useRef(store);
@@ -92,8 +94,16 @@ function Workspace({ user, onSignOut }: { user: User; onSignOut: () => Promise<v
     [dispatch, toast],
   );
   const onLimit = useCallback(() => toast(`한 칸에는 ${MAXLEN}자까지 적을 수 있어요`), [toast]);
-  const openBlock = useCallback((b: number) => setFocusBlock(b), []);
-  const closeFocus = useCallback(() => setFocusBlock(null), []);
+  const openBlock = useCallback((b: number, c?: number) => {
+    if (c === undefined) {
+      setFocus({ b, c: null });
+      return;
+    }
+    // 탭 제스처 안에서 동기 렌더 → FocusDialog의 layout effect가 그 칸에 바로 포커스한다 (모바일 키보드가 뜨려면 제스처 안이어야 함)
+    flushSync(() => setFocus({ b, c }));
+  }, []);
+  const navigateFocus = useCallback((b: number) => setFocus({ b, c: null }), []);
+  const closeFocus = useCallback(() => setFocus(null), []);
 
   if (!store || !board) {
     return <div className="wrap" aria-busy="true" />;
@@ -108,7 +118,7 @@ function Workspace({ user, onSignOut }: { user: User; onSignOut: () => Promise<v
     }
     dispatch({ type: 'create' });
     toast('새 만다라트를 만들었어요');
-    if (isMobile) setFocusBlock(CENTER);
+    if (isMobile) openBlock(CENTER, CENTER);
     else
       requestAnimationFrame(() =>
         document.querySelector<HTMLElement>('.block[data-b="4"] [data-kind="core"] [data-cell-input]')?.focus(),
@@ -148,24 +158,28 @@ function Workspace({ user, onSignOut }: { user: User; onSignOut: () => Promise<v
 
       <Header board={board} saveStatus={saveStatus} onNoteChange={(value) => dispatch({ type: 'setNote', value })} />
 
+      {isMobile && (
+        <p className="mhint">
+          <ExpandIcon />
+          칸을 탭하면 크게 열리고 바로 입력할 수 있어요
+        </p>
+      )}
+
       <MandalartBoard board={board} editable={!isMobile} onOpenBlock={openBlock} {...cellHandlers} />
 
-      <p className="hint">
-        {isMobile ? (
-          '블록을 두 번 탭하면 크게 열려서 편집할 수 있어요 · 칸 안에서 Enter는 줄바꿈'
-        ) : (
-          <>
-            칸을 눌러 바로 입력 · <kbd>Enter</kbd> 줄바꿈 · 실천 칸의 ○ 로 완료 표시 · 블록 오른쪽 아래 버튼이나{' '}
-            <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Enter</kbd>로 크게 보기
-          </>
-        )}
-      </p>
+      {!isMobile && (
+        <p className="hint">
+          칸을 눌러 바로 입력 · <kbd>Enter</kbd> 줄바꿈 · 실천 칸의 ○ 로 완료 표시 · 블록 오른쪽 아래 버튼이나{' '}
+          <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Enter</kbd>로 크게 보기
+        </p>
+      )}
 
       <FocusDialog
         board={board}
-        block={focusBlock}
+        block={focus?.b ?? null}
+        cell={focus?.c ?? null}
         autoFocus={!isMobile}
-        onNavigate={setFocusBlock}
+        onNavigate={navigateFocus}
         onClose={closeFocus}
         {...cellHandlers}
       />
